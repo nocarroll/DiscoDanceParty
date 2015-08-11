@@ -1,0 +1,15 @@
+#Last build type
+#Thu, 16 Apr 2015 17:22:20 +0100
+<<<<<<<=HEAD
+#Thu, 16 Apr 2015 13:31:20 +0100
+=\=\=\=\=\=\=
+#Thu, 16 Apr 2015 00:03:53 +0100
+>>>>>>>=37d7f8e503744a474cba8f1e4c53019b125c9d6f
+
+build.last.target=debug
+
+build.last.is.instrumented=false
+
+build.last.is.packaging.debug=true
+
+build.last.is.signing.debug=true

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        
+		
+			<script src="jquerymobile/jquery-1.11.2.min.js"></script>
+			<script src="jquerymobile/jquery.mobile-1.4.5.min.js"></script>
+			<link rel="stylesheet" href="jquerymobile/jquery.mobile.structure-1.4.5.css">
+			
+		<link rel="stylesheet" type="text/css" href="css/index.css" />	
+        <title>Disco Dance Party</title>
+		<!-- Phil's code -->
+		<script>
+			// Wait for device API libraries to load
+			//
+			var maghigh;
+			var maglow;
+			var accelArray = [];
+			var watchID = null;
+			var sampleSize = 10; //This is how many samples are compared
+			var samplingFrequency=50;//Miliseconds between samples
+			var threshold=6;
+			var magnitude;
+			var screenAwake = false;
+			document.addEventListener("deviceready", onDeviceReady, false);
+
+			// device APIs are available
+			//
+			function onDeviceReady() {
+				startWatch();
+				document.addEventListener("pause", pauseHandler, false);
+				document.addEventListener("resume", resumeHandler, false);
+			}
+
+			// Start watching the acceleration
+			//
+			function startWatch() {
+
+				// Update rate
+				var options = { frequency: samplingFrequency };
+
+				watchID = navigator.accelerometer.watchAcceleration(accOnSuccess, accOnError, options);
+			}
+
+			// Stop watching the acceleration
+			//
+			function stopWatch() {
+				if (watchID) {
+					navigator.accelerometer.clearWatch(watchID);
+					watchID = null;
+				}
+			}
+
+			// onSuccess: Get a snapshot of the current acceleration
+			//
+			function accOnSuccess(acceleration) {
+				//store values from the accelerometer
+				var counter = accelArray.push(acceleration.x+acceleration.y+acceleration.z);
+				//once ten values are stored
+				//find the highest
+				if (counter == sampleSize){
+					for (i=0; i<accelArray.length-1; i++){
+						if (i == 0){
+							high = accelArray[0];
+						}
+						else if(accelArray[i]>high){
+							high = accelArray[i]
+						}
+					}
+					for (i=0; i< accelArray.length-1; i++){
+						if (i == 0){
+							low = accelArray[0];
+						}
+						else if(accelArray[i]< low){
+							low = accelArray[i]
+						}
+					}
+					
+					magnitude = Math.abs(high - low);
+					accelArray.shift();
+				}
+				
+				
+				if ( magnitude > threshold ){
+					//document.body.setAttribute("style", "background-color:#bf3978;");
+					document.body.setAttribute("class", "flash");
+					playAudio(tracks[selectedTrack]);
+					if (screenAwake === false){
+					window.plugins.insomnia.keepAwake();
+					screenAwake = true;
+					}
+				}
+				
+				else if ( magnitude <= threshold ){
+				
+					
+					if (my_media != null){
+						document.body.setAttribute("class", "");
+						document.body.setAttribute("style", "background-color:#D1D1D1;");
+						pauseAudio();
+						if (screenAwake === true){
+						window.plugins.insomnia.allowSleepAgain();
+						screenAwake = false;
+						}
+					}
+				}
+			}
+
+			// onError: Failed to get the acceleration
+			//
+			function accOnError() {
+				alert('onError: Failed to get the acceleration');
+			}
+		
+		<!-- end phil's code
+		-->
+		
+		
+		<!-- Neil's code -->
+		
+        // Audio player
+		
+        var my_media = null;
+        var mediaTimer = null;
+		var isPlaying = false;
+		var isStopped = true;
+		
+		var resumePosition = 0;
+		
+		
+		var tracks = ['/android_asset/www/audio/iCantGoForThat.mp3', '/android_asset/www/audio/neverTooMuch.mp3','/android_asset/www/audio/householdGoods.m4a','/android_asset/www/audio/dontStop.mp3'];
+		var selectedTrack = 0;
+		
+		function changeTrack(t){
+			if(isStopped == true){
+				selectedTrack = t;
+				
+				var tList = document.getElementsByClassName(trackSelect);
+				for (i = 0; i < tList.length; i++){
+					tList[i].className("trackSelect");
+					
+				}
+				tList[t].className("trackSelect trackNow");
+				
+			}
+		}
+		
+		
+        function playAudio(src){
+			
+			if( isPlaying === false  ){
+				if (mediaTimer){
+					my_media.seekTo(resumePosition*1000);	
+					}
+				if(my_media === null){
+					// Create Media object from src
+					my_media = new Media (src , mediaOnSuccess, mediaOnError);
+					playAudio(src);
+				}
+				
+				else{
+					// Play audio
+					
+					my_media.play();
+					
+					isPlaying = true;
+					isStopped = false;
+
+					// Update my_media position every second
+					if (mediaTimer === null){
+						mediaTimer = setInterval(function(){
+							// get my_media position
+							my_media.getCurrentPosition(
+								// success callback
+								function(position){
+									if (position > -1) {
+										resumePosition = position;
+										setAudioPosition((resumePosition) + " sec");
+										
+									}
+								},
+								// error callback
+								function(e) {
+									console.log("Error getting pos=" + e);
+									setAudioPosition("Error: " + e);
+								}
+							);
+						}, 500);
+					}	
+				}
+				
+			}
+        }
+		
+        // Pause audio
+        //
+        function pauseAudio() {
+            if (my_media && isPlaying == true) {
+                my_media.pause();
+				isPlaying = false;
+            }
+        }
+
+        // Stop audio
+        //
+        function stopAudio() {
+            if (my_media && isPlaying == false) {
+                my_media.stop();
+				clearInterval(mediaTimer);
+				mediaTimer = null;
+				my_media = null;
+				resumePosition = 0;
+				setAudioPosition(0);
+				isPlaying = false;
+				isStopped = true;
+				document.body.setAttribute("style", "background-color:#000;");
+            }	
+        }
+
+        // onSuccess Callback
+        //
+        function mediaOnSuccess() {
+            console.log("playAudio():Audio Success");
+        }
+
+        // onError Callback
+        //
+        function mediaOnError(error) {
+            console.log('code: '    + error.code    + '\n' +
+                  'message: ' + error.message + '\n');
+        }
+
+        // Set audio position
+        //
+        function setAudioPosition(position) {
+			var calCount = getCalories(position);
+            document.getElementById('calCount').innerHTML = "Calories burnt: " + calCount;
+        }
+
+		function pauseHandler(){
+			
+			if(my_media){
+				my_media.pause;
+				stopAudio();
+			}
+			stopWatch();
+		}
+		
+		function resumeHandler(){
+			
+			startWatch();
+			
+			
+		}
+        
+		
+		<!-- end Neil's code-->
+		<!-- Gerge's code -->	
+		
+		
+		<!-- End Gerge's code -->	
+		<!-- Trasa's code-->
+		
+		function getCalories(x) {
+           var calories = parseFloat(x)*0.1;
+		   calories = calories.toFixed(2);
+        return calories;
+
+        }
+		
+		
+		<!--End Trasa's code-->
+		</script>
+    </head>
+    <body style="overflow:hidden;">
+        <div data-role="page" id="DPPMain">
+		
+		<a id= "optionsLink" href="#sidePanel" class="ui-btn ui-icon-bars ui-btn-icon-left">Options</a>
+		
+		<div data-role="panel" id="sidePanel" data-display="overlay" style="background-color:#27ae60;">
+				<ul data-role="listview" data-theme="b">
+				<div data-role="header"><h1> Options </h1><a href="#" data-rel="close" class="ui-btn-right ui-btn-icon-right">Close</a></h1></div>
+				
+					<li class="list-divider"data-role="list-divider"><h2>Dancing Intensity</h2></li>
+					<li data-icon="false"><a href="#" onclick="threshold=6;">Low</a></li>
+					<li data-icon="false"><a href="#" onclick="threshold=10;">Medium</a></li>
+					<li data-icon="false"><a href="#" onclick="threshold=15;">High</a></li>
+					<li class="list-divider" data-role="list-divider"><h2>Choose Track</h2></li>
+					<li data-icon="false"><a href="#" onclick="changeTrack(0);">Pop</a></li>
+					<li data-icon="false"><a href="#" onclick="changeTrack(1);">Funk</a></li>
+					<li data-icon="false"><a href="#" onclick="changeTrack(2);">Modern</a></li>
+					<li data-icon="false"><a href="#" onclick="changeTrack(3);">MJ</a></li>
+					
+				</ul>
+				
+		</div><!-- /panel -->
+		<div class="hanger"></div>
+		<div class="discoball">
+			<img src="img/dball.png" alt="A Picture of a Disco Ball" onclick="stopAudio();">
+		</div>
+
+		<div id="userInfoDiv">
+			<p id="calCount">Calories burnt: 0</p>
+		</div>
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+		</div>
+    </body>
+</html>

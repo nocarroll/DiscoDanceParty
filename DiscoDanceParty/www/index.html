@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <link rel="stylesheet" type="text/css" href="css/index.css" />
+        
+			<script src="jquerymobile/jquery-1.11.2.min.js"></script>
+			<script src="jquerymobile/jquery.mobile-1.4.5.min.js"></script>
+			<link rel="stylesheet" href="jquerymobile/jquery.mobile.structure-1.4.5.css">
+		
+		
+		<title>Disco Dance Party</title>
+		<script>
+			var maghigh;
+			var maglow;
+			var accelArray = [];
+			var watchID = null;
+			var sampleSize = 10; //This is how many samples are compared
+			var samplingFrequency=50;//Miliseconds between samples
+			var threshold=6;
+			var magnitude;
+			var calories=0;
+			var screenAwake = false;
+			var trackColours = ["#9b59b6","#e67e22","#2c3e50","#1abc9c"];
+			
+			
+			// Wait for device API libraries to load
+			//
+			document.addEventListener("deviceready", onDeviceReady, false);
+			function onDeviceReady() {
+				startWatch();//Begin sampling from the accelerometer
+				document.addEventListener("pause", pauseHandler, false);//When app is suspended
+				document.addEventListener("resume", resumeHandler, false);//when app is reactivated after suspension
+			}
+			
+			// Start watching the acceleration
+
+			function startWatch() {//Begin sampling from the accelerometer
+				var options = { frequency: samplingFrequency };
+				watchID = navigator.accelerometer.watchAcceleration(accOnSuccess, accOnError, options);
+			}
+			
+			function stopWatch() {// Stop watching the acceleration
+				if (watchID) {
+					navigator.accelerometer.clearWatch(watchID);
+					watchID = null;
+				}
+			}
+			
+			// onError: Failed to get the acceleration
+			function accOnError() {
+				alert('onError: Failed to get the acceleration');
+			}
+			
+			function accOnSuccess(acceleration) {// onSuccess: Get a snapshot of the current acceleration
+				var counter = accelArray.push(acceleration.x+acceleration.y+acceleration.z);//store values from the accelerometer
+				if (counter == sampleSize){//Once ten values are stored find the highest...
+					for (i=0; i<accelArray.length-1; i++){
+						if (i == 0){
+							high = accelArray[0];
+						}
+						else if(accelArray[i]>high){
+							high = accelArray[i]
+						}
+					}
+					for (i=0; i< accelArray.length-1; i++){//...and the lowest...
+						if (i == 0){
+							low = accelArray[0];
+						}
+						else if(accelArray[i]< low){
+							low = accelArray[i]
+						}
+					}
+					
+					magnitude = Math.abs(high - low);//...and find the difference between the two.
+					accelArray.shift();
+				}
+				
+				
+				if ( magnitude > threshold ){//If the difference is greater than the threshold
+					calories = calories + samplingFrequency/1000; //update the calorie counter
+					$( "#sidePanel" ).panel( "close" );//Close the side panel if it's already open
+					document.body.setAttribute("class", "flash");//DISCO LIGHTS
+					playAudio(tracks[selectedTrack]);//DISCO MUSIC
+					if (screenAwake === false){//Only fire the keep awake once
+						window.plugins.insomnia.keepAwake();//Do not allow the device to go to sleep while dancing. 
+						screenAwake = true;
+					}
+				}
+				
+				else if ( magnitude <= threshold ){//If the difference is less than the threshold
+					if (my_media != null){
+						document.body.setAttribute("class", "");//Stop them disco lights
+						document.body.setAttribute("style", "background-color:#D1D1D1;");//Apply default background
+						pauseAudio();//Stop that disco music
+						if (screenAwake === true){//Only fire this once
+						window.plugins.insomnia.allowSleepAgain();//Shhhhh. Sleep now. The dance is done.
+						screenAwake = false;//prepare for the next dance party
+						}
+					}
+				}
+			}
+        // Audio player
+
+        var my_media = null;
+        var mediaTimer = null;
+		var isPlaying = false;
+		var isStopped = true;
+		var resumePosition = 0;
+		var tracks = ['/android_asset/www/audio/iCantGoForThat.mp3', '/android_asset/www/audio/neverTooMuch.mp3','/android_asset/www/audio/householdGoods.m4a','/android_asset/www/audio/dontStop.mp3'];
+		var selectedTrack = 0;
+		
+		function changeTrack(t){//Release the media object and load a new source
+			stopAudio();
+			document.body.setAttribute("style", "background-color:"+trackColours[t]+";");
+			if(isStopped == true){
+				selectedTrack = t;			
+			}
+		}
+		
+        function playAudio(src){//Play's some funky music
+			if( isPlaying === false  ){//If the track is not already playing
+				if (mediaTimer){//Workaround for pause and resume track functionality
+					my_media.seekTo(resumePosition*1000);	
+				}
+				if(my_media === null){//create a new media object if one does not already exist
+					my_media = new Media (src , mediaOnSuccess, mediaOnError);
+					playAudio(src);//Play audio again, now that a media object exists
+				}
+				else{//Let's actually play this thing.					
+					my_media.play();					
+					isPlaying = true;//Flow control
+					isStopped = false;
+					if (mediaTimer === null){// Update my_media position every second
+						mediaTimer = setInterval(function(){
+							// get my_media position
+							my_media.getCurrentPosition(
+								// success callback
+								function(position){
+									if (position > -1) {
+										resumePosition = position;
+										setCalorieCounter();
+									}
+								},
+								// error callback
+								function(e) {
+									console.log("Error getting pos=" + e);
+								}
+							);
+						}, 500);
+					}	
+				}
+				
+			}
+        }
+
+        function pauseAudio() { // Pause audio
+            if (my_media && isPlaying == true) {
+                my_media.pause();
+				isPlaying = false;
+            }
+        }
+
+        function stopAudio() {// Stop audio
+            if (my_media && isPlaying == false) {
+                my_media.stop();
+				clearInterval(mediaTimer);
+				mediaTimer = null;
+				my_media = null;
+				resumePosition = 0;
+				setCalorieCounter();
+				isPlaying = false;
+				isStopped = true;
+				document.body.setAttribute("style", "background-color:#3498db;");
+            }	
+        }
+
+       
+        function mediaOnSuccess() { // Media onSuccess Callback
+            console.log("playAudio():Audio Success");
+        }
+
+        function mediaOnError(error) {// Media onError Callback
+            console.log('code: '    + error.code    + '\n' +
+                  'message: ' + error.message + '\n');
+        }
+
+        function setCalorieCounter() {// Set the calorie counter variable and return it to the html
+			var calCount = getCalories(calories);
+            document.getElementById('calCount').innerHTML = "Calories burned: " + calCount;
+        }
+
+		function pauseHandler(){//Called when navigating away from the app			
+			if(my_media){//Stop the music
+				my_media.stop();
+				clearInterval(mediaTimer);
+				mediaTimer = null;
+				my_media = null;
+				resumePosition = 0;
+				setCalorieCounter(0);
+				isPlaying = false;
+				isStopped = true;
+				document.body.setAttribute("style", "background-color:#BF3978;");
+			}
+			stopWatch();//stop reading the accelerometer
+		}
+		
+		function resumeHandler(){//called when resuming the app			
+			startWatch();//start reading the accelerometer again.			
+		}
+ 
+		function getCalories(x) {//Converts seconds into calories
+           var calories = parseFloat(x)*0.1;
+		   calories = calories.toFixed(2);
+			return calories;
+        }
+		</script>
+	</head>
+	<body style="overflow:hidden;">
+        <div data-role="page" id="DPPMain">
+			<a id= "optionsLink" href="#sidePanel" class="ui-btn ui-icon-bars ui-btn-icon-left" onclick="stopAudio();">Options</a>
+			<div data-role="panel" id="sidePanel" data-display="overlay" style="background-color:#27ae60;">
+					<ul data-role="listview" data-theme="b">
+					<div data-role="header">
+						<h1> Options </h1>
+						<a href="#" data-rel="close" class="ui-btn-right ui-btn-icon-right">Close</a>
+					</div>
+						<li class="list-divider"data-role="list-divider"><h2>Dancing Intensity</h2></li>
+						<li data-icon="false"><a href="#" onclick="threshold=6">Low</a></li>
+						<li data-icon="false"><a href="#" onclick="threshold=10">Medium</a></li>
+						<li data-icon="false"><a href="#" onclick="threshold=15">High</a></li>
+						<li class="list-divider" data-role="list-divider"><h2>Choose Track</h2></li>
+						<li data-icon="false"><a href="#" onclick="changeTrack(0)">Pop</a></li>
+						<li data-icon="false"><a href="#" onclick="changeTrack(1)">Funk</a></li>
+						<li data-icon="false"><a href="#" onclick="changeTrack(2)">Modern</a></li>
+						<li data-icon="false"><a href="#" onclick="changeTrack(3)">MJ</a></li>						
+					</ul>
+					
+			</div><!-- /panel -->	
+			<div class="hanger"></div>
+			<div class="discoball">
+				<img src="img/dball.png" alt="A Picture of a Disco Ball" >
+			</div>
+			<div id="userInfoDiv">
+				<p id="calCount">Calories burned: 0</p>
+			</div>
+			<script type="text/javascript" src="cordova.js"></script>
+			<script type="text/javascript" src="js/index.js"></script> 
+		</div>
+	</body>
+</html>

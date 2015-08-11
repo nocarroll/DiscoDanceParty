@@ -1,0 +1,207 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+* {
+    -webkit-tap-highlight-color: rgba(0,0,0,0); /* make transparent link selection, adjust last value opacity 0 to 1.0 */
+	overflow: hidden;
+}
+
+body {
+    -webkit-touch-callout: none;                /* prevent callout to copy image, etc when tap to hold */
+    -webkit-text-size-adjust: none;             /* prevent webkit from resizing text to fit */
+    -webkit-user-select: none;                  /* prevent copy paste, to allow, change 'none' to 'text' */
+    
+    font-family:'HelveticaNeue-Light', 'HelveticaNeue', Helvetica, Arial, sans-serif;
+    font-size:12px;
+    height:100%;
+    margin:0px;
+    padding:0px;
+    width:100%;
+	overflow:hidden;
+}
+div{
+	overflow:hidden;
+}
+
+
+/* Portrait layout (default) */
+.app {
+    background:url(../img/logo.png) no-repeat center top; /* 170px x 200px */
+    position:absolute;             /* position in the center of the screen */
+    left:50%;
+    top:50%;
+    height:50px;                   /* text area height */
+    width:225px;                   /* text area width */
+    text-align:center;
+    padding:180px 0px 0px 0px;     /* image height is 200px (bottom 20px are overlapped with text) */
+    margin:-115px 0px 0px -112px;  /* offset vertical: half of image height and text area height */
+                                   /* offset horizontal: half of text area width */
+}
+
+/* Landscape layout (with min-width) */
+@media screen and (min-aspect-ratio: 1/1) and (min-width:400px) {
+    .app {
+        background-position:left center;
+        padding:75px 0px 75px 170px;  /* padding-top + padding-bottom + text area = image height */
+        margin:-90px 0px 0px -198px;  /* offset vertical: half of image height */
+                                      /* offset horizontal: half of image width and text area width */
+    }
+}
+
+/*style the options menu in the top left hand corner*/
+#optionsLink{
+	display:block;
+	left:0;
+	padding:0;
+	border-radius:13px;
+	width:150px;
+	padding-top:12px;
+	padding-bottom:12px;
+	background-color:#27ae60;
+	color:#fff;
+	text-decoration:none;
+}
+
+/*style the options panel*/
+
+ul{
+	background-color:#27ae60;
+}
+ul li a{
+	color:#000;
+	text-decoration:none;
+}
+.list-divider{
+	background-color:rgba(255,255,255,0.3);
+}
+
+
+h1{
+	font-size: 12px;
+}
+
+body {
+  background: #BF3978;
+  margin: 60px auto;
+  width: 302px;
+  text-align: center;
+}
+/*CSS3 DiscoBall from http://codepen.io/Lando/pen/dxufJ */
+@-webkit-keyframes hue {
+  from {
+  
+    -webkit-filter: hue-rotate(0deg);
+  }
+  
+  to {
+    -webkit-filter: hue-rotate(360deg);
+  }
+}
+.discoball {
+  -webkit-animation-timing-function: linear;
+  -webkit-animation-duration: 1s;
+  -webkit-animation-name: hue;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-direction: alternate;
+  
+  background: lightgrey;
+  border-radius: 200px;
+  
+  border: 1px solid lightgrey;
+  height: 302px;
+  width: 302px;
+  margin: auto;
+  cursor: pointer;
+}
+/*Little stem hanging down from the celing for our disco ball*/
+.hanger {
+  background: #fff;
+  width: 3px;
+  border-right: 2px solid #999;
+  height: 60px;
+  position: absolute;
+  top: 0;
+  left: 50%;
+}
+/*Calorie counter section*/
+#calCount{
+	font-size: 24px;
+	color: #000;
+	font-weight: bold;
+	background-color:#ffff00;
+	width:302px;
+	margin:15px auto;
+	padding:15px;
+	border-radius:16px;
+}
+/*Flashing background lights */
+.flash{
+	-webkit-animation-name: flashingAnimation; /* Chrome, Safari, Opera */
+	-webkit-animation-duration: 2s; /* Chrome, Safari, Opera */
+	-webkit-animation-iteration-count: infinite;
+    animation-name: flashingAnimation;
+    animation-duration: 2s;
+	animation-iteration-count: infinite;
+}
+@-webkit-keyframes flashingAnimation {
+    0% {background-color: red;}
+    5% {background-color: yellow;}
+	10%{background-color: green;}
+	15%{background-color: blue;}
+	20%{background-color: white;}
+	25%{background-color: aqua;}
+	30%{background-color: fuscia;}
+	35%{background-color: gray;}
+	40%{background-color: lime;}
+	45%{background-color: maroon;}
+	50%{background-color: navy;}
+	55%{background-color: white;}
+	60%{background-color: olive;}
+	65%{background-color: orange;}
+	70%{background-color: purple;}
+	75%{background-color: silver;}
+	80%{background-color: teal;}
+	85%{background-color: white;}
+	90%{background-color: aqua;}
+	95%{background-color: black;}
+	100%{background-color: lime;}
+}
+
+@keyframes flashingAnimation {
+    0% {background-color: red;}
+    5% {background-color: yellow;}
+	10%{background-color: green;}
+	15%{background-color: blue;}
+	20%{background-color: white;}
+	25%{background-color: aqua;}
+	30%{background-color: fuscia;}
+	35%{background-color: gray;}
+	40%{background-color: lime;}
+	45%{background-color: maroon;}
+	50%{background-color: navy;}
+	55%{background-color: white;}
+	60%{background-color: olive;}
+	65%{background-color: orange;}
+	70%{background-color: purple;}
+	75%{background-color: silver;}
+	80%{background-color: teal;}
+	85%{background-color: white;}
+	90%{background-color: aqua;}
+	95%{background-color: black;}
+	100%{background-color: lime;}
+}

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=device-dpi" />
+        <link rel="stylesheet" type="text/css" href="css/index.css" />
+        <title>Hello World</title>
+		<!-- Phil's code -->
+		<script>
+			// Wait for device API libraries to load
+			//
+			var maghigh;
+			var maglow;
+			var accelArray = [];
+			var watchID = null;
+			var sampleSize = 20; //This is how many samples are compared
+			var samplingFrequency=50;//Miliseconds between samples
+			var threshold=6;
+			var magnitude;
+			document.addEventListener("deviceready", onDeviceReady, false);
+
+			// device APIs are available
+			//
+			function onDeviceReady() {
+				startWatch();
+			}
+
+			// Start watching the acceleration
+			//
+			function startWatch() {
+
+				// Update rate
+				var options = { frequency: samplingFrequency };
+
+				watchID = navigator.accelerometer.watchAcceleration(accOnSuccess, accOnError, options);
+			}
+
+			// Stop watching the acceleration
+			//
+			function stopWatch() {
+				if (watchID) {
+					navigator.accelerometer.clearWatch(watchID);
+					watchID = null;
+				}
+			}
+
+			// onSuccess: Get a snapshot of the current acceleration
+			//
+			function accOnSuccess(acceleration) {
+				//store values from the accelerometer
+				var counter = accelArray.push(acceleration.x);
+				//once ten values are stored
+				//find the highest
+				if (counter == sampleSize){
+					for (i=0; i<accelArray.length-1; i++){
+						if (i == 0){
+							high = accelArray[0];
+						}
+						else if(accelArray[i]>high){
+							high = accelArray[i]
+						}
+					}
+					for (i=0; i< accelArray.length-1; i++){
+						if (i == 0){
+							low = accelArray[0];
+						}
+						else if(accelArray[i]< low){
+							low = accelArray[i]
+						}
+					}
+					
+					magnitude = Math.abs(high - low);
+					accelArray.shift();
+				}
+				
+				
+				if (magnitude > threshold){
+					document.body.setAttribute("style", "background-color:#ff0000;");
+				} else{
+				
+				document.body.setAttribute("style", "background-color:#0000ff;");
+				}
+			}
+
+			// onError: Failed to get the acceleration
+			//
+			function accOnError() {
+				alert('onError: Failed to get the acceleration');
+			}
+		
+		<!-- end phil's code
+		-->
+		
+		
+		<!-- Neil's code -->
+		
+        // Audio player
+  
+        var my_media = null;
+        var mediaTimer = null;
+		var isPlaying = false;
+		var isStopped = true;
+		var resumePosition = 0;
+		
+		var tracks = ['/android_asset/www/audio/el/iCantGoForThat.mp3', '/android_asset/www/audio/el/neverTooMuch.mp3','/android_asset/www/audio/el/householdGoods.m4a','/android_asset/www/audio/el/dontStop.mp3'];
+		var selectedTrack = 0;
+		
+		function changeTrack(t){
+			if(isStopped = true){
+				selectedTrack = t;
+			}
+		}
+		
+		
+        function playAudio(src){
+			
+			if (isPlaying == false){
+				if(my_media == null){
+					// Create Media object from src
+					my_media = new Media (src , mediaOnSuccess, mediaOnError);
+					playAudio(src);
+				}
+				
+				else{
+					// Play audio
+					my_media.play();
+					my_media.seekTo(resumePosition);
+					isPlaying = true;
+					isStopped = false;
+
+					// Update my_media position every second
+					if (mediaTimer == null){
+						mediaTimer = setInterval(function(){
+							// get my_media position
+							my_media.getCurrentPosition(
+								// success callback
+								function(position){
+									if (position > -1) {
+										setAudioPosition((position) + " sec");
+										resumePosition = position;
+									}
+								},
+								// error callback
+								function(e) {
+									console.log("Error getting pos=" + e);
+									setAudioPosition("Error: " + e);
+								}
+							);
+						}, 1000);
+					}
+				
+				}
+				
+			}
+        }
+		
+		
+		
+		
+        // Pause audio
+        //
+        function pauseAudio() {
+            if (my_media) {
+			
+				
+                my_media.pause();
+				
+				isPlaying = false;
+				
+				
+				
+            }
+        }
+
+        // Stop audio
+        //
+        function stopAudio() {
+            if (my_media) {
+                my_media.stop();
+				
+            }
+            clearInterval(mediaTimer);
+            mediaTimer = null;
+			my_media = null;
+			resumePosition = 0;
+			setAudioPosition(0);
+			isPlaying = false;
+			isStopped = true;
+			
+        }
+
+        // onSuccess Callback
+        //
+        function mediaOnSuccess() {
+            console.log("playAudio():Audio Success");
+        }
+
+        // onError Callback
+        //
+        function mediaOnError(error) {
+            alert('code: '    + error.code    + '\n' +
+                  'message: ' + error.message + '\n');
+        }
+
+        // Set audio position
+        //
+        function setAudioPosition(position) {
+            document.getElementById('audio_position').innerHTML = position;
+        }
+		
+		<!-- end Neil's code-->
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		<!-- start audio example -->
+		// Audio player
+        //
+        var my_media = null;
+        var mediaTimer = null;
+
+        // Play audio
+        //
+        function playAudio(src) {
+            // Create Media object from src
+            my_media = new Media(src, mediaOnSuccess, mediaOnError);
+
+            // Play audio
+            my_media.play();
+
+            // Update my_media position every second
+            if (mediaTimer == null) {
+                mediaTimer = setInterval(function() {
+                    // get my_media position
+                    my_media.getCurrentPosition(
+                        // success callback
+                        function(position) {
+                            if (position > -1) {
+                                setAudioPosition((position) + " sec");
+                            }
+                        },
+                        // error callback
+                        function(e) {
+                            console.log("Error getting pos=" + e);
+                            setAudioPosition("Error: " + e);
+                        }
+                    );
+                }, 1000);
+            }
+        }
+
+        // Pause audio
+        //
+        function pauseAudio() {
+            if (my_media) {
+                my_media.pause();
+            }
+        }
+
+        // Stop audio
+        //
+        function stopAudio() {
+            if (my_media) {
+                my_media.stop();
+            }
+            clearInterval(mediaTimer);
+            mediaTimer = null;
+        }
+
+        // onSuccess Callback
+        //
+        function mediaOnSuccess() {
+            console.log("playAudio():Audio Success");
+        }
+
+        // onError Callback
+        //
+        function mediaOnError(error) {
+            alert('code: '    + error.code    + '\n' +
+                  'message: ' + error.message + '\n');
+        }
+
+        // Set audio position
+        //
+        function setAudioPosition(position) {
+            document.getElementById('audio_position').innerHTML = position;
+        }
+		<!-- end audio example -->
+		<!-- Gerge's code -->	
+		
+		
+		<!-- End Gerge's code -->	
+		<!-- Trasa's code-->
+		
+		
+		<!--End Trasa's code-->
+		</script>
+    </head>
+    <body>
+        <!-- <div id="accelerometer" style="background-color:#0000ff; width:100%; height:100%; position:absolute; top:0; left:0;"></div> -->
+		<a href="#" class="btn large" onclick="playAudio(tracks[selectedTrack]);">Play Audio</a><br/>
+				
+			<a href="#" class="btn large" onclick="pauseAudio();">Pause Playing Audio</a><br/>
+			
+			<a href="#" class="btn large" onclick="stopAudio();">Stop Playing Audio</a><br/>
+			
+			<p id="audio_position"></p>
+			
+			<div class="hanger"></div>
+			<div class="discoball">
+			  <img src="img/dball.png" alt="A Picture of a Disco Ball">
+			</div>
+			
+			
+			<table id="theTable">
+			  <tr>
+				<td><div class="trackSelect" onclick="changeTrack(0)"><h1>Smooth and Sexy</h1></div></td>
+				<td><div class="trackSelect fR" onclick="changeTrack(1)"><h1>Who got the funk?</h1></div></td> 
+			  </tr>
+			  <tr>
+				<td><div class="trackSelect" onclick="changeTrack(2)"><h1>Shiny Jackets</h1></div></td>
+				<td><div class="trackSelect fR" onclick="changeTrack(3)"><h1>The King of Pop</h1></div></td> 
+			  </tr>
+			</table>
+		<!-- Phil's code
+		
+		
+		-->
+		<!-- Neil's code
+		
+		
+		-->
+		<!-- Gerge's code
+		
+		
+		-->		
+		<!-- Trasa's code
+		
+		
+		-->
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script> 
+    </body>
+</html>
